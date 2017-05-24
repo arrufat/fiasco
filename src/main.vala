@@ -47,7 +47,7 @@ public class Main : Object {
 		var lst = new string[n];
 
 		try {
-			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) filter_image, num_threads, true);
+			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) Worker.filter_images, num_threads, true);
 			for (var i = 0; i < num_threads; i++) {
 				uint start = i * (n / num_threads);
 				uint end = (i + 1) * (n / num_threads) - 1;
@@ -85,18 +85,18 @@ class Worker : Object {
 		this.start = start;
 		this.end = end;
 	}
-}
 
-void filter_image (Worker w) {
-	for (var i = w.start; i < w.end; i++) {
-		var file_path = w.arr.index (i);
-		try {
-			var img = new Gdk.Pixbuf.from_file (file_path);
-			if (img.get_height() > 16 && img.get_width() > 16) {
-				w.lst[i] = file_path;
+	public static void filter_images (Worker w) {
+		for (var i = w.start; i < w.end; i++) {
+			var file_path = w.arr.index (i);
+			try {
+				var img = new Gdk.Pixbuf.from_file (file_path);
+				if (img.get_height () > 16 && img.get_width () > 16) {
+					w.lst[i] = file_path;
+				}
+			} catch (Error e) {
+				stderr.printf ("i = %06u => %s\n", i, file_path);
 			}
-		} catch (Error e) {
-			stderr.printf ("i = %06u => %s\n", i, file_path);
 		}
 	}
 }
