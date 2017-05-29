@@ -56,9 +56,9 @@ public class Main : Object {
 		try {
 			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) Worker.filter_images, num_threads, true);
 			for (var i = 0; i < num_threads; i++) {
-				uint start = i * (num_files / num_threads);
-				uint end = (i + 1) * (num_files / num_threads) - 1;
-				if (i == num_files - 1) end += num_files % num_threads;
+				uint start;
+				uint end;
+				Worker.compute_range (i, num_files, num_threads, out start, out end);
 				message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))\n");
 				threads.add (new Worker (ref files, ref lst, start, end));
 			}
@@ -92,6 +92,13 @@ class Worker : Object {
 		this.lst = lst;
 		this.start = start;
 		this.end = end;
+	}
+
+	/* compute the range to use for current worker */
+	public static void compute_range (int i, uint n, int num_threads, out uint start, out uint end) {
+		start = i * (n / num_threads);
+		end = (i + 1) * (n / num_threads) - 1;
+		if (i == num_threads - 1) end += n % num_threads;
 	}
 
 	/* filter out non image files */
