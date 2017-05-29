@@ -42,7 +42,7 @@ public class Main : Object {
 		try {
 			var dir = Dir.open (base_dir);
 			while ((file_name = dir.read_name ()) != null) {
-				var file_path = base_dir + Path.DIR_SEPARATOR_S + file_name;
+				var file_path = Path.build_filename (base_dir, file_name);
 				files.append_val (file_path);
 			}
 		} catch (FileError fe) {
