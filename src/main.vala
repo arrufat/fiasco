@@ -16,6 +16,8 @@ public class Main : Object {
 	};
 
 	public static int main (string[] args) {
+
+		/* parse the command line */
 		try {
 			var opt_context = new OptionContext ("- filter out bad images");
 			opt_context.set_help_enabled (true);
@@ -26,10 +28,14 @@ public class Main : Object {
 			stdout.printf ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
 			return 0;
 		}
+
+		/* get the number of threads to use */
 		if (num_threads < 1) {
 			num_threads = (int) get_num_processors ();
 		}
 		message ("Using %d threads\n", num_threads);
+
+		/* get all files from directory */
 		string file_name;
 		var base_dir = directory[0];
 		var files = new Array<string> ();
@@ -42,16 +48,17 @@ public class Main : Object {
 		} catch (FileError fe) {
 			error (fe.message);
 		}
-		var n = files.length;
-		message ("Found %u files\n", n);
-		var lst = new string[n];
+		var num_files = files.length;
+		message ("Found %u files\n", num_files);
+		var lst = new string[num_files];
 
+		/* process files in parallel */
 		try {
 			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) Worker.filter_images, num_threads, true);
 			for (var i = 0; i < num_threads; i++) {
-				uint start = i * (n / num_threads);
-				uint end = (i + 1) * (n / num_threads) - 1;
-				if (i == num_threads - 1) end += n % num_threads;
+				uint start = i * (num_files / num_threads);
+				uint end = (i + 1) * (num_files / num_threads) - 1;
+				if (i == num_files - 1) end += num_files % num_threads;
 				message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))\n");
 				threads.add (new Worker (ref files, ref lst, start, end));
 			}
@@ -59,6 +66,7 @@ public class Main : Object {
 			stderr.printf ("%s\n", e.message);
 		}
 
+		/* fill an array with image files only */
 		var imgs = new Array<string> ();
 		for (var i = 0; i < lst.length; i ++) {
 			if (lst[i] != null) {
@@ -86,12 +94,13 @@ class Worker : Object {
 		this.end = end;
 	}
 
+	/* filter out non image files */
 	public static void filter_images (Worker w) {
 		for (var i = w.start; i < w.end; i++) {
 			var file_path = w.arr.index (i);
 			try {
 				var img = new Gdk.Pixbuf.from_file (file_path);
-				if (img.get_height () > 16 && img.get_width () > 16) {
+				if (img.get_height () >= 16 && img.get_width () >= 16) {
 					w.lst[i] = file_path;
 				}
 			} catch (Error e) {
