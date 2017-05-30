@@ -110,7 +110,11 @@ class Worker : Object {
 	}
 
 	/* compute the range to use for current worker */
-	public static void compute_range (int i, uint n, int num_threads, out uint start, out uint end) {
+	public static void compute_range (int i, uint n, int num_threads, out uint start, out uint end)
+		requires (n >= i >= 0)
+		requires (num_threads > 0)
+		ensures (start <= end)
+	{
 		start = i * (n / num_threads);
 		end = (i + 1) * (n / num_threads) - 1;
 		if (i == num_threads - 1) end += n % num_threads;
