@@ -17,15 +17,23 @@ public class Main : Object {
 
 	public static int main (string[] args) {
 
+		var args_length = args.length;
+		string help;
 		/* parse the command line */
 		try {
 			var opt_context = new OptionContext ("- filter out bad images");
 			opt_context.set_help_enabled (true);
 			opt_context.add_main_entries (options, null);
 			opt_context.parse (ref args);
+			help = opt_context.get_help (true, null);
 		} catch (OptionError e) {
 			stdout.printf ("error: %s\n", e.message);
 			stdout.printf ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+			return 0;
+		}
+
+		if (args_length == 1) {
+			print (help + "\n");
 			return 0;
 		}
 
