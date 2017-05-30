@@ -13,7 +13,7 @@ public class Main : Object {
 	private const OptionEntry[] options = {
 		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directory, "Directory with images to parse", "DIRECTORY" },
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads", "INT" },
-		{ "fast", 0, 0, OptionArg.NONE, ref fast, "Faster but less reliable version", null },
+		{ "fast", 0, 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
 		{ null } // list terminator
 	};
