@@ -2,6 +2,8 @@
 
 using GLib;
 
+public static bool fast = false;
+
 public class Main : Object {
 	private static bool version = false;
 	[CCode (array_length = false, array_null_terminated = true)]
@@ -11,6 +13,7 @@ public class Main : Object {
 	private const OptionEntry[] options = {
 		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directory, "Directory with images to parse", "DIRECTORY" },
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads", "INT" },
+		{ "fast", 0, 0, OptionArg.NONE, ref fast, "Faster but less reliable version", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
 		{ null } // list terminator
 	};
@@ -34,6 +37,11 @@ public class Main : Object {
 
 		if (args_length == 1) {
 			print (help + "\n");
+			return 0;
+		}
+
+		if (version) {
+			print ("vparser - 0.1.0\n");
 			return 0;
 		}
 
@@ -64,8 +72,7 @@ public class Main : Object {
 		try {
 			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) Worker.filter_images, num_threads, true);
 			for (var i = 0; i < num_threads; i++) {
-				uint start;
-				uint end;
+				uint start, end;
 				Worker.compute_range (i, num_files, num_threads, out start, out end);
 				message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))\n");
 				threads.add (new Worker (ref files, ref lst, start, end));
@@ -113,13 +120,21 @@ class Worker : Object {
 	public static void filter_images (Worker w) {
 		for (var i = w.start; i < w.end; i++) {
 			var file_path = w.arr.index (i);
-			try {
-				var img = new Gdk.Pixbuf.from_file (file_path);
-				if (img.get_height () >= 16 && img.get_width () >= 16) {
+			if (fast) {
+				int width, height;
+				Gdk.Pixbuf.get_file_info (file_path, out width, out height);
+				if (width >= 16 && height >= 16) {
 					w.lst[i] = file_path;
 				}
-			} catch (Error e) {
-				stderr.printf ("i = %06u => %s\n", i, file_path);
+			} else {
+				try {
+					var img = new Gdk.Pixbuf.from_file (file_path);
+					if (img.get_height () >= 16 && img.get_width () >= 16) {
+						w.lst[i] = file_path;
+					}
+				} catch (Error e) {
+					stderr.printf ("i = %06u => %s\n", i, file_path);
+				}
 			}
 		}
 	}
