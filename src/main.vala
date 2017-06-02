@@ -101,12 +101,11 @@ public class Main : Object {
 	}
 }
 
-
-class Worker : Object {
-	public unowned Array<string> arr;
-	public unowned string[] lst;
-	public uint start;
-	public uint end;
+public class Worker : Object {
+	private unowned Array<string> arr;
+	private unowned string[] lst;
+	private uint start;
+	private uint end;
 
 	public Worker (ref Array<string> arr, ref string[] lst, uint start, uint end) {
 		this.arr = arr;
@@ -115,20 +114,28 @@ class Worker : Object {
 		this.end = end;
 	}
 
-	/* compute the range to use for current worker */
-	public static void get_range (int i, uint n, int num_threads, out uint start, out uint end)
-		requires (n >= i >= 0)
-		requires (num_threads > 0)
+	/**
+	 * Computes the range to be used by a thread
+	 *
+	 * @param id thread id ()
+	 * @param total total number of elements to process
+	 * @param num_threads number of threads to use
+	 * @param start first element to process in the array of ``total`` elements
+	 * @param end last element to process in the array of ``total`` elements
+	 */
+	public static void get_range (int id, uint total, int num_threads, out uint start, out uint end)
+		requires (0 <= id < num_threads)
+		requires (total > 0)
 		ensures (start <= end)
 	{
-		start = i * (n / num_threads);
-		end = (i + 1) * (n / num_threads) - 1;
-		if (i == num_threads - 1) end += n % num_threads;
+		start = id * (total / num_threads);
+		end = (id + 1) * (total / num_threads) - 1;
+		if (id == num_threads - 1) end += total % num_threads;
 	}
 
 	/* filter out non image files */
 	public static void filter_images (Worker w) {
-		for (var i = w.start; i < w.end; i++) {
+		for (var i = w.start; i <= w.end; i++) {
 			var file_path = w.arr.index (i);
 			if (fast) {
 				int width, height;
