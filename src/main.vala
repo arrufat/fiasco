@@ -3,6 +3,7 @@
 using GLib;
 
 public static bool fast = false;
+public static int size = 0;
 
 public class Main : Object {
 	private static bool version = false;
@@ -12,8 +13,9 @@ public class Main : Object {
 
 	private const OptionEntry[] options = {
 		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directory, "Directory with images to parse", "DIRECTORY" },
-		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads", "INT" },
-		{ "fast", 0, 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
+		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
+		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smallers than size x size (default: 16)", "INT" },
+		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
 		{ null } // list terminator
 	};
@@ -43,6 +45,10 @@ public class Main : Object {
 		if (version) {
 			print ("vparser - 0.1.0\n");
 			return 0;
+		}
+
+		if (size < 1 ) {
+			size = 16;
 		}
 
 		/* get the number of threads to use */
@@ -133,7 +139,7 @@ class Worker : Object {
 			} else {
 				try {
 					var img = new Gdk.Pixbuf.from_file (file_path);
-					if (img.get_height () >= 16 && img.get_width () >= 16) {
+					if (img.get_height () >= size && img.get_width () >= size) {
 						w.lst[i] = file_path;
 					}
 				} catch (Error e) {
