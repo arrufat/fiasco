@@ -86,9 +86,6 @@ public class Main : Object {
 			for (var i = 0; i < num_threads; i++) {
 				uint start, end;
 				Worker.get_range (i, num_files, num_threads, out start, out end);
-				if (verbose) {
-					message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))");
-				}
 				threads.add (new Worker (ref files, ref lst, start, end));
 			}
 		} catch (ThreadError e) {
@@ -128,7 +125,7 @@ public class Worker : Object {
 	 * Computes the range to be used by a thread
 	 *
 	 * @param id thread id ()
-	 * @param total total number of elements to process
+	 * @param total total number of elements to process in the original array
 	 * @param num_threads number of threads to use
 	 * @param start first element to process in the array of ``total`` elements
 	 * @param end last element to process in the array of ``total`` elements
@@ -141,6 +138,8 @@ public class Worker : Object {
 		start = id * (total / num_threads);
 		end = (id + 1) * (total / num_threads) - 1;
 		if (id == num_threads - 1) end += total % num_threads;
+		/* display the message below by setting G_MESSAGES_DEBUG=all */
+		debug (@"Thread $(id) => start: $start, end: $end (amount: $(end - start + 1))");
 	}
 
 	/* filter out non image files */
