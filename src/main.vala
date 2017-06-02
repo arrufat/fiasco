@@ -4,6 +4,7 @@ using GLib;
 
 public static bool fast = false;
 public static int size = 0;
+public static bool verbose = false;
 
 public class Main : Object {
 	private static bool version = false;
@@ -16,6 +17,7 @@ public class Main : Object {
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
 		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smallers than size x size (default: 16)", "INT" },
 		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
+		{ "verbose", 'v', 0, OptionArg.NONE, ref verbose, "Be verbose", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
 		{ null } // list terminator
 	};
@@ -55,7 +57,9 @@ public class Main : Object {
 		if (num_threads < 1) {
 			num_threads = (int) get_num_processors ();
 		}
-		message ("Using %d threads\n", num_threads);
+		if (verbose) {
+			message ("Using %d threads", num_threads);
+		}
 
 		/* get all files from directory */
 		string file_name;
@@ -71,7 +75,9 @@ public class Main : Object {
 			error (fe.message);
 		}
 		var num_files = files.length;
-		message ("Found %u files\n", num_files);
+		if (verbose) {
+			message ("Found %u files", num_files);
+		}
 		var lst = new string[num_files];
 
 		/* process files in parallel */
@@ -80,7 +86,9 @@ public class Main : Object {
 			for (var i = 0; i < num_threads; i++) {
 				uint start, end;
 				Worker.get_range (i, num_files, num_threads, out start, out end);
-				message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))\n");
+				if (verbose) {
+					message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))");
+				}
 				threads.add (new Worker (ref files, ref lst, start, end));
 			}
 		} catch (ThreadError e) {
@@ -95,7 +103,9 @@ public class Main : Object {
 				stdout.printf (lst[i] + "\n");
 			}
 		}
-		message ("Found %u images\n", imgs.length);
+		if (verbose) {
+			message ("Found %u images", imgs.length);
+		}
 
 		return 0;
 	}
@@ -150,7 +160,9 @@ public class Worker : Object {
 						w.lst[i] = file_path;
 					}
 				} catch (Error e) {
-					stderr.printf ("i = %06u => %s\n", i, file_path);
+					if (verbose) {
+						message ("i = %06u => %s (%s)", i, file_path, e.message);
+					}
 				}
 			}
 		}
