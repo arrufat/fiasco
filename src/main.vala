@@ -73,7 +73,7 @@ public class Main : Object {
 			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) Worker.filter_images, num_threads, true);
 			for (var i = 0; i < num_threads; i++) {
 				uint start, end;
-				Worker.compute_range (i, num_files, num_threads, out start, out end);
+				Worker.get_range (i, num_files, num_threads, out start, out end);
 				message (@"Thread $(i + 1): start: $start, end: $end (amount: $(end - start + 1))\n");
 				threads.add (new Worker (ref files, ref lst, start, end));
 			}
@@ -110,7 +110,7 @@ class Worker : Object {
 	}
 
 	/* compute the range to use for current worker */
-	public static void compute_range (int i, uint n, int num_threads, out uint start, out uint end)
+	public static void get_range (int i, uint n, int num_threads, out uint start, out uint end)
 		requires (n >= i >= 0)
 		requires (num_threads > 0)
 		ensures (start <= end)
