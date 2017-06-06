@@ -7,7 +7,10 @@ gobject= dependency('gobject-2.0')
 gio = dependency('gio-2.0')
 gpb = dependency('gdk-pixbuf-2.0')
 
-deps = [gio, gpb]
+optionguess = subproject('optionguess')
+optionguess_dep = optionguess.get_variable('optionguess_dep')
+
+deps = [gio, gpb, optionguess_dep]
 
 parse_src = ['src/main.vala']
 

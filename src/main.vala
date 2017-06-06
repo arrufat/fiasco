@@ -1,6 +1,8 @@
 // modules: gio-2.0 gdk-pixbuf-2.0
+// sources: subprojects/optionguess/src/optionguess.vala
 
 using GLib;
+using OG;
 
 public static bool fast = false;
 public static int size = 0;
@@ -15,7 +17,7 @@ public class Main : Object {
 	private const OptionEntry[] options = {
 		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directory, "Directory with images to parse", "DIRECTORY" },
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
-		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smallers than size x size (default: 16)", "INT" },
+		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smaller than size x size (default: 16)", "INT" },
 		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
 		{ "verbose", 'v', 0, OptionArg.NONE, ref verbose, "Be verbose", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
@@ -34,8 +36,8 @@ public class Main : Object {
 			opt_context.parse (ref args);
 			help = opt_context.get_help (true, null);
 		} catch (OptionError e) {
-			stdout.printf ("error: %s\n", e.message);
-			stdout.printf ("Run '%s --help' to see a full list of available command line options.\n", args[0]);
+			var opt_guess = new OptionGuess (options, e);
+			opt_guess.print_message ();
 			return 0;
 		}
 
