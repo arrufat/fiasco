@@ -9,8 +9,10 @@ gpb = dependency('gdk-pixbuf-2.0')
 
 optionguess = subproject('optionguess')
 optionguess_dep = optionguess.get_variable('optionguess_dep')
+parallel = subproject('parallel-vala')
+parallel_dep = parallel.get_variable('parallel_dep')
 
-deps = [gio, gpb, optionguess_dep]
+deps = [gio, gpb, optionguess_dep, parallel_dep]
 
 parse_src = ['src/main.vala']
 

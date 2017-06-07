@@ -1,8 +1,12 @@
 // modules: gio-2.0 gdk-pixbuf-2.0
 // sources: subprojects/optionguess/src/optionguess.vala
+// sources: subprojects/optionguess/src/termcolors.vala
+// sources: subprojects/optionguess/src/levenshtein.vala
+// sources: subprojects/parallel-vala/src/parallel.vala
 
 using GLib;
 using OG;
+using Parallel;
 
 public static bool fast = false;
 public static int size = 0;
@@ -66,106 +70,60 @@ public class Main : Object {
 		/* get all files from directory */
 		string file_name;
 		var base_dir = directory[0];
-		var files = new Array<string> ();
+		string[] files = {};
 		try {
 			var dir = Dir.open (base_dir);
 			while ((file_name = dir.read_name ()) != null) {
 				var file_path = Path.build_filename (base_dir, file_name);
-				files.append_val (file_path);
+				files += file_path;
 			}
-		} catch (FileError fe) {
-			error (fe.message);
+		} catch (FileError e) {
+			error (e.message);
 		}
 		var num_files = files.length;
 		if (verbose) {
 			message ("Found %u files", num_files);
 		}
-		var lst = new string[num_files];
 
-		/* process files in parallel */
-		try {
-			var threads = new ThreadPool<Worker>.with_owned_data ((ThreadPoolFunc<Worker>) Worker.filter_images, num_threads, true);
-			for (var i = 0; i < num_threads; i++) {
-				uint start, end;
-				Worker.get_range (i, num_files, num_threads, out start, out end);
-				threads.add (new Worker (ref files, ref lst, start, end));
-			}
-		} catch (ThreadError e) {
-			stderr.printf ("%s\n", e.message);
-		}
+		var par = new ParArray<string> ();
+		par.data = files;
+		par.function = filter_images;
+		par.dispatch ();
 
-		/* fill an array with image files only */
-		var imgs = new Array<string> ();
-		for (var i = 0; i < lst.length; i ++) {
-			if (lst[i] != null) {
-				imgs.append_val (lst[i]);
-				stdout.printf (lst[i] + "\n");
+		var num_imgs = 0;
+		foreach (var f in files) {
+			if (f != null) {
+				stdout.printf (f + "\n");
+				num_imgs++;
 			}
 		}
+
 		if (verbose) {
-			message ("Found %u images", imgs.length);
+			message ("Found %u images", num_imgs);
 		}
 
 		return 0;
 	}
 }
 
-public class Worker : Object {
-	private unowned Array<string> arr;
-	private unowned string[] lst;
-	private uint start;
-	private uint end;
-
-	public Worker (ref Array<string> arr, ref string[] lst, uint start, uint end) {
-		this.arr = arr;
-		this.lst = lst;
-		this.start = start;
-		this.end = end;
-	}
-
-	/**
-	 * Computes the range to be used by a thread
-	 *
-	 * @param id thread id ()
-	 * @param total total number of elements to process in the original array
-	 * @param num_threads number of threads to use
-	 * @param start first element to process in the array of ``total`` elements
-	 * @param end last element to process in the array of ``total`` elements
-	 */
-	public static void get_range (int id, uint total, int num_threads, out uint start, out uint end)
-		requires (0 <= id < num_threads)
-		requires (total > 0)
-		ensures (start <= end)
-	{
-		start = id * (total / num_threads);
-		end = (id + 1) * (total / num_threads) - 1;
-		if (id == num_threads - 1) end += total % num_threads;
-		/* display the message below by setting G_MESSAGES_DEBUG=all */
-		debug (@"Thread $(id) => start: $start, end: $end (amount: $(end - start + 1))");
-	}
-
-	/* filter out non image files */
-	public static void filter_images (Worker w) {
-		for (var i = w.start; i <= w.end; i++) {
-			var file_path = w.arr.index (i);
-			if (fast) {
-				int width, height;
-				Gdk.Pixbuf.get_file_info (file_path, out width, out height);
-				if (width >= 16 && height >= 16) {
-					w.lst[i] = file_path;
-				}
-			} else {
-				try {
-					var img = new Gdk.Pixbuf.from_file (file_path);
-					if (img.get_height () >= size && img.get_width () >= size) {
-						w.lst[i] = file_path;
-					}
-				} catch (Error e) {
-					if (verbose) {
-						message ("i = %06u => %s (%s)", i, file_path, e.message);
-					}
-				}
-			}
+void filter_images (ParArray<string> p) {
+	var file_path = p.data[p.index];
+	try {
+		int width, height;
+		if (fast) {
+			Gdk.Pixbuf.get_file_info (file_path, out width, out height);
+		} else {
+			var img = new Gdk.Pixbuf.from_file (file_path);
+			width = img.width;
+			height = img.height;
+		}
+		if (width < size || height < size) {
+			p.data[p.index] = null;
+		}
+	} catch (Error e) {
+		p.data[p.index] = null;
+		if (verbose) {
+			message ("i = %06u => %s (%s)", p.index, file_path, e.message);
 		}
 	}
 }
