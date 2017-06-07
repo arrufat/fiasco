@@ -11,18 +11,20 @@ using Parallel;
 public static bool fast = false;
 public static int size = 0;
 public static bool verbose = false;
+public static bool recursive = false;
 
 public class Main : Object {
 	private static bool version = false;
 	[CCode (array_length = false, array_null_terminated = true)]
-	private static string[] directory = null;
+	private static string[] directories = null;
 	private static int num_threads = 0;
 
 	private const OptionEntry[] options = {
-		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directory, "Directory with images to parse", "DIRECTORY" },
+		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directories, "Directories with images to parse", "DIRECTORY..." },
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
 		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smaller than size x size (default: 16)", "INT" },
 		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
+		{ "recursive", 'r', 0, OptionArg.NONE, ref recursive, "Crawl directories recursively", null },
 		{ "verbose", 'v', 0, OptionArg.NONE, ref verbose, "Be verbose", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
 		{ null } // list terminator
@@ -59,26 +61,13 @@ public class Main : Object {
 			size = 16;
 		}
 
-		/* get the number of threads to use */
-		if (num_threads < 1) {
-			num_threads = (int) get_num_processors ();
-		}
-		if (verbose) {
-			message ("Using %d threads", num_threads);
-		}
-
-		/* get all files from directory */
-		string file_name;
-		var base_dir = directory[0];
+		/* get all files from directories */
 		string[] files = {};
-		try {
-			var dir = Dir.open (base_dir);
-			while ((file_name = dir.read_name ()) != null) {
-				var file_path = Path.build_filename (base_dir, file_name);
-				files += file_path;
+		foreach (var directory in directories) {
+			var deep_files = list_files (directory, recursive);
+			foreach (var df in deep_files) {
+				files += df;
 			}
-		} catch (FileError e) {
-			error (e.message);
 		}
 		var num_files = files.length;
 		if (verbose) {
@@ -125,5 +114,27 @@ void filter_images (ParArray<string> p) {
 		if (verbose) {
 			message ("i = %06u => %s (%s)", p.index, file_path, e.message);
 		}
+	}
+}
+
+string[] list_files (string directory, bool recursive = false) {
+	string[] files = {};
+	string file_name;
+	try {
+		var dir = Dir.open (directory);
+		while ((file_name = dir.read_name ()) != null) {
+			var file_path = Path.build_filename (directory, file_name);
+			if (FileUtils.test (file_path, FileTest.IS_DIR) && recursive) {
+				var deep_files = list_files (file_path, recursive);
+				foreach (var df in deep_files) {
+					files += df;
+				}
+			} else {
+				files += file_path;
+			}
+		}
+		return files;
+	} catch (FileError e) {
+		error (e.message);
 	}
 }
