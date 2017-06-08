@@ -38,7 +38,7 @@ public class Main : Object {
 		string help;
 		/* parse the command line */
 		try {
-			var opt_context = new OptionContext ("- filter out bad images");
+			var opt_context = new OptionContext ("- Filter Images According to Size using Command-line Options");
 			opt_context.set_help_enabled (true);
 			opt_context.add_main_entries (options, null);
 			opt_context.parse (ref args);
@@ -55,7 +55,7 @@ public class Main : Object {
 		}
 
 		if (version) {
-			print ("vparser - 0.1.0\n");
+			print ("Fiasco - 0.1.0\n");
 			return 0;
 		}
 

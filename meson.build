@@ -1,4 +1,4 @@
-project('vparser', ['vala', 'c'],
+project('fiasco', ['vala', 'c'],
     version: '0.1.0',
     default_options: ['buildtype=release'])
 
@@ -14,10 +14,10 @@ parallel_dep = parallel.get_variable('parallel_dep')
 
 deps = [gio, gpb, optionguess_dep, parallel_dep]
 
-parse_src = ['src/main.vala']
+srcs = ['src/main.vala']
 
-vparser = executable('vparser',
-    sources: parse_src,
+executable('fiasco',
+    sources: srcs,
     dependencies: deps,
     install: true)
 
