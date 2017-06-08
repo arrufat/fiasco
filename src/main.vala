@@ -18,13 +18,15 @@ public class Main : Object {
 	[CCode (array_length = false, array_null_terminated = true)]
 	private static string[] directories = null;
 	private static int num_threads = 0;
+	private static string? output = null;
 
 	private const OptionEntry[] options = {
 		{ "", 0, 0, OptionArg.FILENAME_ARRAY, ref directories, "Directories with images to parse", "DIRECTORY..." },
-		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
 		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smaller than size x size (default: 16)", "INT" },
-		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
+		{ "output", 'o', 0, OptionArg.FILENAME, ref output, "The file where the resulting list will be written (default: stdout)", "FILENAME" },
 		{ "recursive", 'r', 0, OptionArg.NONE, ref recursive, "Crawl directories recursively", null },
+		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
+		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
 		{ "verbose", 'v', 0, OptionArg.NONE, ref verbose, "Be verbose", null },
 		{ "version", 0, 0, OptionArg.NONE, ref version, "Display version number", null },
 		{ null } // list terminator
@@ -79,17 +81,23 @@ public class Main : Object {
 		par.function = filter_images;
 		par.dispatch ();
 
+		/* print to a file if output was specified */
+		unowned FileStream out_file = stdout;
+		FileStream tmp;
+		if (output != null) {
+			tmp = FileStream.open (output, "w");
+			out_file = tmp;
+		}
+
 		var num_imgs = 0;
 		foreach (var f in files) {
 			if (f != null) {
-				stdout.printf (f + "\n");
+				out_file.printf (f + "\n");
 				num_imgs++;
 			}
 		}
 
-		if (verbose) {
-			message ("Found %u images", num_imgs);
-		}
+		stderr.printf ("Found %u images larger than %dx%d\n", num_imgs, size, size);
 
 		return 0;
 	}
