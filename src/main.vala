@@ -9,7 +9,7 @@ using OG;
 using Parallel;
 
 public static bool fast = false;
-public static int size = 0;
+public static int size = 16;
 public static bool verbose = false;
 public static bool recursive = false;
 
@@ -60,8 +60,9 @@ public class Main : Object {
 		}
 
 		if (size < 1 ) {
-			size = 16;
-		}
+			print ("Size must be positive (was: %d)\n", size);
+			return 0;
+		};
 
 		/* get all files from directories */
 		string[] files = {};
