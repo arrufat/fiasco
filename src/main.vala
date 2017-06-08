@@ -132,7 +132,7 @@ string[] list_files (string directory, bool recursive = false) {
 		var dir = Dir.open (directory);
 		while ((file_name = dir.read_name ()) != null) {
 			var file_path = Path.build_filename (directory, file_name);
-			if (FileUtils.test (file_path, FileTest.IS_DIR) && recursive) {
+			if (recursive && FileUtils.test (file_path, FileTest.IS_DIR)) {
 				var deep_files = list_files (file_path, recursive);
 				foreach (var df in deep_files) {
 					files += df;
