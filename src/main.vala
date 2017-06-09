@@ -59,6 +59,11 @@ public class Main : Object {
 			return 0;
 		}
 
+		if (directories.length < 1) {
+			print ("Please, specify at least one directory\n");
+			return 0;
+		}
+
 		if (size < 1 ) {
 			print ("Size must be positive (was: %d)\n", size);
 			return 0;
