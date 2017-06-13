@@ -149,6 +149,9 @@ string[] list_files (string directory, bool recursive = false) {
 		}
 		return files;
 	} catch (FileError e) {
-		error (e.message);
+		if (verbose) {
+			warning (e.message);
+		}
+		return files;
 	}
 }
