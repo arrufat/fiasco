@@ -72,8 +72,8 @@ public class Main : Object {
 		/* get all files from directories */
 		string[] files = {};
 		foreach (var directory in directories) {
-			var deep_files = list_files (directory, recursive);
-			foreach (var df in deep_files) {
+			var inner_file = list_files (directory, recursive);
+			foreach (var df in inner_file) {
 				files += df;
 			}
 		}
@@ -103,7 +103,7 @@ public class Main : Object {
 			}
 		}
 
-		stderr.printf ("Found %u images larger than %dx%d\n", num_imgs, size, size);
+		stderr.printf ("Found %u images larger than %dx%d in %u files\n", num_imgs, size, size, num_files);
 
 		return 0;
 	}
@@ -139,8 +139,8 @@ string[] list_files (string directory, bool recursive = false) {
 		while ((file_name = dir.read_name ()) != null) {
 			var file_path = Path.build_filename (directory, file_name);
 			if (recursive && FileUtils.test (file_path, FileTest.IS_DIR)) {
-				var deep_files = list_files (file_path, recursive);
-				foreach (var df in deep_files) {
+				var inner_file = list_files (file_path, recursive);
+				foreach (var df in inner_file) {
 					files += df;
 				}
 			} else {
