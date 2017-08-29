@@ -69,6 +69,11 @@ public class Main : Object {
 			return 0;
 		};
 
+		if (0 > num_threads > get_num_processors()) {
+			/* setting num_threads to 0, will make parallellise accross all cores */
+			num_threads = 0;
+		}
+
 		/* get all files from directories */
 		string[] files = {};
 		foreach (var directory in directories) {
@@ -85,6 +90,7 @@ public class Main : Object {
 		var par = new ParArray<string> ();
 		par.data = files;
 		par.function = filter_images;
+		par.num_threads = num_threads;
 		par.dispatch ();
 
 		/* print to a file if output was specified */
