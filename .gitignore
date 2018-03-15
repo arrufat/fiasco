@@ -46,3 +46,6 @@ subprojects
 
 # build dirs
 build
+
+# tags file
+tags
