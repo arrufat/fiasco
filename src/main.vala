@@ -27,7 +27,7 @@ public class Main : Object {
 		{ "size", 's', 0, OptionArg.INT, ref size, "Filter out images smaller than size x size (default: 16)", "INT" },
 		{ "output", 'o', 0, OptionArg.FILENAME, ref output, "The file where the resulting list will be written (default: stdout)", "FILENAME" },
 		{ "dir", 'd', 0, OptionArg.FILENAME, ref out_dir, "The output directory where images will be exported (default: export)", "DIRECTORY" },
-		{ "export", 'e', 0, OptionArg.STRING, ref export, "Export valid images to the specified format to ./export", "png,jpeg,bmp" },
+		{ "export", 'e', 0, OptionArg.STRING, ref export, "Export valid images to the specified format", "png,jpeg,bmp" },
 		{ "recursive", 'r', 0, OptionArg.NONE, ref recursive, "Crawl directories recursively", null },
 		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
