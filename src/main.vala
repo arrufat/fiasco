@@ -11,6 +11,7 @@ using Parallel;
 public static bool fast = false;
 public static int size = 16;
 public static bool verbose = false;
+public static bool clean = false;
 public static bool recursive = false;
 public static string? export = null;
 public static string out_dir = null;
@@ -28,6 +29,7 @@ public class Main : Object {
 		{ "output", 'o', 0, OptionArg.FILENAME, ref output, "The file where the resulting list will be written (default: stdout)", "FILENAME" },
 		{ "dir", 'd', 0, OptionArg.FILENAME, ref out_dir, "The output directory where images will be exported (default: export)", "DIRECTORY" },
 		{ "export", 'e', 0, OptionArg.STRING, ref export, "Export valid images to the specified format", "png,jpeg,bmp" },
+		{ "clean", 'c', 0, OptionArg.NONE, ref clean, "Clean up original images", null },
 		{ "recursive", 'r', 0, OptionArg.NONE, ref recursive, "Crawl directories recursively", null },
 		{ "fast", 'f', 0, OptionArg.NONE, ref fast, "Faster but less reliable mode without image loading", null },
 		{ "threads", 't', 0, OptionArg.INT, ref num_threads, "Use the given number of threads (default: all)", "INT" },
@@ -78,17 +80,24 @@ public class Main : Object {
 			num_threads = 0;
 		}
 
+		if (export == null && clean == true) {
+			warning ("clean option is ignored when export is not set.\n");
+			clean = false;
+		}
+
 		/* prepare directory for valid images */
 		out_dir = out_dir ?? "export";
-		if (export != null && !fast) {
-			try {
-				var dir = File.new_for_commandline_arg (out_dir);
-				dir.make_directory_with_parents ();
-			} catch (Error e) {
-				stdout.printf ("Error: %s\n", e.message);
+		if (export != null) {
+			if (fast == false) {
+				try {
+					var dir = File.new_for_commandline_arg (out_dir);
+					dir.make_directory_with_parents ();
+				} catch (Error e) {
+					stderr.printf ("%s\n", e.message);
+				}
+			} else {
+				warning ("export option is ignored when running in fast mode.\n");
 			}
-		} else {
-			warning ("export option is ignored when running in fast mode.\n");
 		}
 
 		/* get all files from directories */
@@ -151,7 +160,6 @@ void filter_images (ParArray<string> p) {
 			} else if (export != null) {
 				var name = Path.get_basename (file_path);
 				var dot_index = name.last_index_of_char ('.');
-				stdout.printf ("%s\n", name[0:dot_index]);
 				img.save(out_dir + Path.DIR_SEPARATOR_S + name[0:dot_index] + "." + export, export);
 			}
 		}
@@ -159,6 +167,14 @@ void filter_images (ParArray<string> p) {
 		p.data[p.index] = null;
 		if (verbose) {
 			message ("i = %06u => %s (%s)", p.index, file_path, e.message);
+		}
+	}
+	if (clean == true) {
+		var file = File.new_for_path (file_path);
+		try {
+			file.delete ();
+		} catch (Error e) {
+			stderr.printf ("%s\n", e.message);
 		}
 	}
 }
